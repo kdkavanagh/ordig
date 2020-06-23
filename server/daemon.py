@@ -19,34 +19,6 @@ f = open('.privatekey', 'w')
 f.write(server_config['private_key'])
 f.close()
 
-# check for wireguard link
-cmd = ['ip', 'link', 'show', server_config['name']]
-o = subprocess.run(cmd, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-if o.returncode != 0:
-    # create wireguard link
-    cmd = ['ip', 'link', 'add', 'dev', server_config['name'], 'type', 'wireguard']
-    o = subprocess.run(cmd, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if o.returncode != 0:
-        print('Failed to setup wireguard link: ' + o.stderr)
-        sys.exit(1)
-    # set ip address
-    cmd = ['ip', 'address', 'add', 'dev', server_config['name'], server_config['ip']]
-    o = subprocess.run(cmd, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if o.returncode != 0:
-        print('Failed to set ip on wireguard link: ' + o.stderr)
-        sys.exit(1)
-    # add listener and key
-    cmd = ['wg', 'set', server_config['name'], 'listen-port', server_config['port'], 'private-key', '.privatekey']
-    o = subprocess.run(cmd, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if o.returncode != 0:
-        print('Failed to set listener and key on wireguard link: ' + o.stderr)
-        sys.exit(1)
-    # bring interface up
-    cmd = ['ip', 'link', 'set', 'up', 'dev', server_config['name']]
-    o = subprocess.run(cmd, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if o.returncode != 0:
-        print('Failed to set wireguard link up: ' + o.stderr)
-        sys.exit(1)
 
 # start infinite loop of getting client configs and setting them on the server
 while True:

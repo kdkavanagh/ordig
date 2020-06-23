@@ -1,5 +1,6 @@
 $WG_URL = "https://{{WG_ENDPOINT}}"
 $WG_KEY = "{{WG_CLIENT_API_KEY}}"
+$WG_BLACKHOLE = "{{WG_BLACKHOLE}}"
 $HEADER = @{"Authorization"="Bearer "+ $WG_KEY}
 $FolderPath = "C:\ProgramData\WireGuard"
 
@@ -33,8 +34,8 @@ $config_key = (Get-Content ($FolderPath + "\config_key")).toString()
 
 # check if wg is installed
 if(-not (Test-Path "C:\Program Files\WireGuard\wireguard.exe")){
-  (New-Object System.Net.WebClient).DownloadFile("https://{{WG_ENDPOINT}}/public/wireguard-amd64-0.0.38.msi", ($FolderPath + "\wireguard-amd64-0.0.38.msi"))
-  & ($FolderPath + "\wireguard-amd64-0.0.38.msi") /quiet /qn /log ($FolderPath + "\wireguard-amd64-0.0.38.log")
+  (New-Object System.Net.WebClient).DownloadFile("https://{{WG_ENDPOINT}}/public/wireguard-amd64-0.1.1.msi", ($FolderPath + "\wireguard-amd64-0.1.1.msi"))
+  & ($FolderPath + "\wireguard-amd64-0.1.1.msi") /quiet /qn /log ($FolderPath + "\wireguard-amd64-0.1.1.log")
   Start-Sleep 30
 }
 
@@ -58,6 +59,7 @@ if($r.StatusCode -eq 200){
     "NameServer" = $Config.nameserver;
     "Namespace" = $Config.namespace;
     "Name" = $Config.name;
+    "Blackhole" = $WG_BLACKHOLE;
   } | ConvertTo-Json | Out-File -Encoding Default ($FolderPath + "\dns_config.json")
 
   # Get nssm
@@ -74,17 +76,16 @@ $ServiceName = ("WireGuardTunnel`$" + $Config.name)
 
 while($True){
   # make sure we can reach the on-prem DNS server
-  if(& nslookup -timeout=1 -retry=1 $Config.Namespace $Config.NameServer | where {$_ -like "*timed out*"}){
-    # VPN running
-    if((Get-Service $ServiceName).Status -eq "Running"){
-      # Stop it
-      Stop-Service $ServiceName
-    }else{ # Not running
-      # Start it
-      Start-Service $ServiceName
-    }
-  }
-
+  if(& Test-Connection -ComputerName $Config.Blackhole -Quiet -Count 1) {
+        # We are on the on-prem network, turn off VPN
+        Stop-Service $ServiceName
+  } else {
+        $service = Get-Service -Name $ServiceName
+        if((Get-Service $ServiceName).Status -ne "Running") {
+                Start-Service $ServiceName
+        }      
+  } 
+  Start-Sleep 1
   # make sure DNS config is there if the VPN is running
   if(((Get-Service $ServiceName).Status -eq "Running") -and ((Get-DnsClientNrptRule | Measure).Count -eq 0)){
     Add-DnsClientNrptRule -Namespace ('.' + $Config.namespace) -NameServers $Config.nameserver

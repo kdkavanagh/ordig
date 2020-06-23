@@ -25,6 +25,9 @@ read i
 WG_NAMESERVER=${i:=10.10.10.10}
 echo -n "Networks use for internal traffic [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16]: "
 read i
+WG_BLACKHOLE=${i:=192.168.254.1}
+echo -n "Blockhole IP to detect on-prem [192.168.254.1]: "
+read i
 WG_ALLOWED=${i:=10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16}
 echo -n "UDP port clients will connect to [51820]: "
 read i
@@ -79,7 +82,7 @@ fi
 if [ ! -d /opt/ordig ]
 then
   cd /opt
-  git clone https://github.com/nickadam/ordig.git
+  git clone https://github.com/kdkavanagh/ordig.git
 fi
 cd /opt/ordig
 
@@ -93,6 +96,7 @@ echo '{
   "WG_PORT": "'"${WG_PORT}"'",
   "WG_ENDPOINT": "'"${WG_ENDPOINT}"'",
   "WG_ALLOWED": "'"${WG_ALLOWED}"'",
+  "WG_BLACKHOLE": "'"${WG_BLACKHOLE}"'",
   "WG_SERVER_API_KEY": "'"${WG_SERVER_API_KEY}"'",
   "WG_CLIENT_API_KEY": "'"${WG_CLIENT_API_KEY}"'"
 }' > config.json
