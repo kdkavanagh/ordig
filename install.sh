@@ -25,10 +25,10 @@ read i
 WG_NAMESERVER=${i:=10.10.10.10}
 echo -n "Networks use for internal traffic [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16]: "
 read i
-WG_BLACKHOLE=${i:=192.168.254.1}
+WG_ALLOWED=${i:=10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16}
 echo -n "Blockhole IP to detect on-prem [192.168.254.1]: "
 read i
-WG_ALLOWED=${i:=10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16}
+WG_BLACKHOLE=${i:=192.168.254.1}
 echo -n "UDP port clients will connect to [51820]: "
 read i
 WG_PORT=${i:=51820}
@@ -84,7 +84,9 @@ then
   cd /opt
   git clone https://github.com/kdkavanagh/ordig.git
 fi
+GIT_SHA=$(git rev-parse HEAD)
 cd /opt/ordig
+git checkout $GIT_SHA
 
 # create docker-compose
 echo '{
