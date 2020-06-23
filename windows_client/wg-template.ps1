@@ -103,6 +103,10 @@ while($True){
   $Watcher.replace("`n", "`r`n") | Out-File -Encoding Default ($FolderPath + "\wg_watcher.ps1")
 
   # Install watcher service
+  if (Get-Service "wg_watcher" -ErrorAction SilentlyContinue) {
+        $service = Get-WmiObject -Class Win32_Service -Filter "Name='wg_watcher'"
+        $service.delete()
+  }
   $nssm = ($FolderPath + "\nssm.exe")
   if(-not (Get-Service | Where{$_.name -eq "wg_watcher"})){
     & $nssm install wg_watcher (Get-Command powershell).Source ("-ExecutionPolicy Bypass -NoProfile -File " + $FolderPath + "\wg_watcher.ps1")
