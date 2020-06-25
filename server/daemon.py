@@ -11,7 +11,6 @@ api_url = config['api_url']
 api_key = config['api_key']
 
 headers = {'Authorization': 'Bearer ' + api_key}
-
 r = requests.get(api_url + '/api/v1/server/config', headers=headers)
 server_config  = r.json()
 # write private key to file
@@ -19,23 +18,13 @@ f = open('.privatekey', 'w')
 f.write(server_config['private_key'])
 f.close()
 
+print("Hello world.  Checking for wg link")
 cmd = ['ip', 'link', 'show', server_config['name']]
 o = subprocess.run(cmd, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 if o.returncode != 0:
+    print("Creating wireguard link...")
     # create wireguard link
-    cmd = ['ip', 'link', 'add', 'dev', server_config['name'], 'type', 'wireguard']
-    o = subprocess.run(cmd, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if o.returncode != 0:
-        print('Failed to setup wireguard link: ' + o.stderr)
-        sys.exit(1)
-    # set ip address
-    cmd = ['ip', 'address', 'add', 'dev', server_config['name'], server_config['ip']]
-    o = subprocess.run(cmd, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if o.returncode != 0:
-        print('Failed to set ip on wireguard link: ' + o.stderr)
-        sys.exit(1)
-    # add listener and key
-    cmd = ['wg', 'setconf', server_config['name'], f'{server_config["name"]}.conf']
+    cmd = ['wg-quick', 'up', f'./{server_config["name"]}.conf']
     o = subprocess.run(cmd, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if o.returncode != 0:
         print('Failed to set initial confs wireguard link: ' + o.stderr)
@@ -46,12 +35,9 @@ if o.returncode != 0:
         print('Failed to set listener and key on wireguard link: ' + o.stderr)
         sys.exit(1)
     # bring interface up
-    cmd = ['ip', 'link', 'set', 'up', 'dev', server_config['name']]
-    o = subprocess.run(cmd, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if o.returncode != 0:
-        print('Failed to set wireguard link up: ' + o.stderr)
-        sys.exit(1)
+    print("Link up and running!")
 
+print("Beginning watch loop")
 # start infinite loop of getting client configs and setting them on the server
 while True:
     # get current wg config

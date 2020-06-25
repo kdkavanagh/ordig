@@ -114,6 +114,8 @@ jinja2 windows_client/wg-template.ps1 config.json > wg.ps1
 jinja2 server/config-template.json config.json > server/config.json
 jinja2 server/wg-conf-template.conf config.json > server/${WG_NAME}.conf
 
+chmod 0640 server/${WG_NAME}.conf
+
 # create Caddyfile
 jinja2 Caddyfile-template config.json > Caddyfile
 
