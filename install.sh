@@ -13,6 +13,9 @@ echo "Press enter to accept [defaults]"
 echo -n "Interface name for WireGuard [wg0]: "
 read i
 WG_NAME=${i:=wg0}
+echo -n "Uplink interface [eno1]: "
+read i
+WG_UPLINK_IFACE=${i:=eno1}
 echo -n "Network for clients [10.100.0.0/16]: "
 read i
 WG_POOL=${i:=10.100.0.0/16}
@@ -84,14 +87,14 @@ then
   cd /opt
   git clone https://github.com/kdkavanagh/ordig.git
 fi
-GIT_SHA=$(git rev-parse HEAD)
 cd /opt/ordig
-git checkout $GIT_SHA
+git pull
 
 # create docker-compose
 echo '{
   "WG_NAME": "'"${WG_NAME}"'",
   "WG_IP": "'"${WG_IP}"'",
+  "WG_UPLINK_IFACE": "'"${WG_UPLINK_IFACE}"'",
   "WG_POOL": "'"${WG_POOL}"'",
   "WG_NAMESPACE": "'"${WG_NAMESPACE}"'",
   "WG_NAMESERVER": "'"${WG_NAMESERVER}"'",
@@ -109,9 +112,11 @@ jinja2 windows_client/wg-template.ps1 config.json > wg.ps1
 
 # create server config
 jinja2 server/config-template.json config.json > server/config.json
+jinja2 server/wg-conf-template.conf config.json > server/${WG_NAME}.conf
 
 # create Caddyfile
 jinja2 Caddyfile-template config.json > Caddyfile
+
 
 echo ""
 echo "Install complete!"

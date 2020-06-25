@@ -35,6 +35,11 @@ if o.returncode != 0:
         print('Failed to set ip on wireguard link: ' + o.stderr)
         sys.exit(1)
     # add listener and key
+    cmd = ['wg', 'setconf', server_config['name'], f'{server_config["name"]}.conf']
+    o = subprocess.run(cmd, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if o.returncode != 0:
+        print('Failed to set initial confs wireguard link: ' + o.stderr)
+        sys.exit(1)
     cmd = ['wg', 'set', server_config['name'], 'listen-port', server_config['port'], 'private-key', '.privatekey']
     o = subprocess.run(cmd, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if o.returncode != 0:

@@ -5,11 +5,11 @@ services:
     user: node
     working_dir: /home/node/app
     command: bash -c 'while true; do npm start; done'
-  deploy:
-          restart: unless-stopped 
-   environment:
+    restart: unless-stopped 
+    environment:
       WG_NAME: {{WG_NAME}}
       WG_IP: {{WG_IP}}
+      WG_UPLINK_IFACE: {{WG_UPLINK_IFACE}}
       WG_BLACKHOLE: {{WG_BLACKHOLE}}
       WG_POOL: {{WG_POOL}}
       WG_NAMESPACE: {{WG_NAMESPACE}}
@@ -38,8 +38,7 @@ services:
         mode: host
     depends_on:
       - api
-    deploy:
-          restart: unless-stopped 
+    restart: unless-stopped 
     volumes:
       - type: bind
         source: ./Caddyfile
